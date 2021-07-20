@@ -8,15 +8,17 @@ import br.com.alura.forum.model.Topico;
 import br.com.alura.forum.repository.CursoRepository;
 import br.com.alura.forum.repository.TopicoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.validation.Valid;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,17 +33,22 @@ public class TopicosController {
     private CursoRepository cursoRepository;
 
     @GetMapping
-    public List<TopicoDto> lista(String nomeCurso) {
+    public Page<TopicoDto> lista(
+            @RequestParam(required = false) String nomeCurso,
+            @RequestParam int pagina,
+            @RequestParam int qtd,
+            @RequestParam String ordenacao
+
+    ) {
+
+        Pageable pageable = PageRequest.of(pagina, qtd, Sort.Direction.ASC, ordenacao);
 
         if(nomeCurso == null) {
-            List<Topico> topicos = topicoRepository.findAll();
-            return TopicoDto.toModelList(topicos);
+            Page<Topico> topicos = topicoRepository.findAll(pageable);
+            return TopicoDto.toModelPage(topicos);
         }
-//        List<Topico> topicos = topicoRepository.findByCursoNome(nomeCurso);
-//        return TopicoDto.toModelList(topicos);
-
-        List<Topico> topicos = topicoRepository.carregarPorNomeDoCurso(nomeCurso);
-        return TopicoDto.toModelList(topicos);
+        Page<Topico> topicos = topicoRepository.findByCursoNome(nomeCurso, pageable);
+        return TopicoDto.toModelPage(topicos);
     }
 
     @PostMapping
@@ -60,10 +67,8 @@ public class TopicosController {
     public ResponseEntity<DetalhesTopicoDto> buscar(@PathVariable Long id) {
 
         Optional<Topico> topico = topicoRepository.findById(id);
-        if (topico.isPresent())
-            return ResponseEntity.status(HttpStatus.OK).body(new DetalhesTopicoDto(topico.get()));
-
-        return ResponseEntity.notFound().build();
+        return topico.map(present -> ResponseEntity.status(HttpStatus.OK).body(new DetalhesTopicoDto(present)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
