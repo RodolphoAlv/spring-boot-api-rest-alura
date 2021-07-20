@@ -1,30 +1,33 @@
 package br.com.alura.forum.dto;
 
+import br.com.alura.forum.model.StatusTopico;
 import br.com.alura.forum.model.Topico;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class TopicoDto {
+public class DetalhesTopicoDto {
     private Long id;
     private String titulo;
     private String mensagem;
     private LocalDateTime dataCriacao;
+    private String nome;
+    private StatusTopico status;
+    private List<RespostaDto> respostas;
 
-    public TopicoDto(Long id, String titulo, String mensagem, LocalDateTime dataCriacao) {
-        this.id = id;
-        this.titulo = titulo;
-        this.mensagem = mensagem;
-        this.dataCriacao = dataCriacao;
-    }
-
-    public TopicoDto(Topico topico) {
+    public DetalhesTopicoDto(Topico topico) {
         this.id = topico.getId();
         this.titulo = topico.getTitulo();
         this.mensagem = topico.getMensagem();
         this.dataCriacao = topico.getDataCriacao();
+        this.nome = topico.getAutor().getNome();
+        this.status = topico.getStatus();
+        this.respostas = topico
+                .getRespostas()
+                .stream()
+                .map(RespostaDto::new)
+                .collect(Collectors.toList());
     }
 
     public Long getId() {
@@ -59,11 +62,27 @@ public class TopicoDto {
         this.dataCriacao = dataCriacao;
     }
 
-    public static List<TopicoDto> toModelList(List<Topico> topicos) {
-        return topicos.stream()
-                .map(t -> new TopicoDto(
-                        t.getId(), t.getTitulo(),
-                        t.getMensagem(), t.getDataCriacao()))
-                .collect(Collectors.toList());
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public StatusTopico getStatus() {
+        return status;
+    }
+
+    public void setStatus(StatusTopico status) {
+        this.status = status;
+    }
+
+    public List<RespostaDto> getRespostas() {
+        return respostas;
+    }
+
+    public void setRespostas(List<RespostaDto> respostas) {
+        this.respostas = respostas;
     }
 }
